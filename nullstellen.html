@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roots of Quadratic Polynomials</title>
+    <style>
+        body {
+            background-color: black; /* to give color to the site */
+            color: white;
+            font-family: Arial, sans-serif; /* for better font */
+        }
+        input, button {
+            color: black; /* Text inside input fields and button */
+        }
+        canvas {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculate the Roots of Quadratic Polynomials</h1>
+    <p>Please enter the coefficients a, b and c for ax<sup>2</sup> + bx + c, to calculate the roots.</p>
+    
+
+    <label for="a">a (x<sup>2</sup> coefficient):</label>
+    <input type="number" id="a" name="a"><br><br>
+
+    <label for="b">b (x coefficient):</label>
+    <input type="number" id="b" name="b"><br><br>
+
+    <label for="c">c (constant term):</label>
+    <input type="number" id="c" name="c"><br><br>
+
+    <button onclick="calculateRoot()">Calculate Root</button>
+
+    <h2>Result:</h2>
+    <p id="results"></p>
+
+    <canvas id = "polynomialGraph" width = "500" height = "500"></canvas>
+
+    <script>
+        var canvas = document.getElementById('polynomialGraph');
+        var ctx = canvas.getContext('2d');
+
+        var min = -10
+        var max = 10
+
+        var toCanvasX = function(x){
+            return(x - min) * canvas.width / (max - min);
+        };
+        var toCanvasY = function(y){
+            return canvas.height - (y - min) * canvas.height / (max - min);
+    };
+
+    // to draw the axes with arrows
+    function drawArrow(fromx, fromy, tox, toy) {
+            var headlen = 10; // Length of head in pixels
+            var angle = Math.atan2(toy - fromy, tox - fromx);
+            ctx.moveTo(fromx, fromy);
+            ctx.lineTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+    }
+
+    function drawAxes(a, b, c, roots) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        drawArrow(toCanvasX(min), toCanvasY(0), toCanvasX(max), toCanvasY(0)); // X-axis
+        drawArrow(toCanvasX(0), toCanvasY(max), toCanvasX(0), toCanvasY(min)); // Y-axis
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
+
+        //to label the axes
+        ctx.font = "16px Arial";
+        ctx.fillText("X", toCanvasX(max) - 30, toCanvasY(0) - 10);
+        ctx.fillText("Y", toCanvasX(0) -30, toCanvasY(max) + 30);
+
+        // Unit markings with lines only
+        for (let i = min; i <= max; i++) {
+            if (i !== 0) { // Skip the origin
+                // Markings on X-axis
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(i), toCanvasY(0) - 5);
+                ctx.lineTo(toCanvasX(i), toCanvasY(0) + 5);
+                ctx.strokeStyle = 'black';
+                ctx.stroke();
+
+                // Markings on Y-axis
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(0) - 5, toCanvasY(i));
+                ctx.lineTo(toCanvasX(0) + 5, toCanvasY(i));
+                ctx.strokeStyle = 'black';
+                ctx.stroke();
+            }
+        }
+    }
+
+    function drawGraph(a, b, c, roots){
+        drawAxes();
+
+        // to plot the quadratic function
+        ctx.beginPath();
+        ctx.strokeStyle = (a !== 0) ? 'red' : 'green'; // red = quadratic; green = linear
+        for (var x = min; x <= max; x += 0.01) { // to increase precision
+            var y = a !== 0 ? (a * x * x + b * x + c) : (b * x + c); // Use quadratic formula if a != 0, else linear
+            if (x === min) {
+                ctx.moveTo(toCanvasX(x), toCanvasY(y));
+            } else {
+                ctx.lineTo(toCanvasX(x), toCanvasY(y));
+            }
+        }
+        ctx.stroke();
+
+        // to mark the roots
+        if (roots && roots.length > 0) {
+            roots.forEach(function(root) {
+                ctx.beginPath();
+                ctx.arc(toCanvasX(root), toCanvasY(0), 5, 0, 2 * Math.PI);
+                ctx.fillStyle = 'blue';
+                ctx.fill();
+            });
+        }
+    }
+    
+    function calculateRoot() {
+        var a = parseFloat(document.getElementById('a').value);
+        var b = parseFloat(document.getElementById('b').value);
+        var c = parseFloat(document.getElementById('c').value);
+
+        // check for NaN
+        if (isNaN(a) || isNaN(b) || isNaN(c)) {
+            document.getElementById('results').innerHTML = 'Please enter valid coefficients';
+            return;
+        }
+
+        // handle x + 1  gives the point x = -1
+        if (a === 0) {
+            if (b === 0) {
+            document.getElementById('results').innerHTML = 'Not a valid polynomial.';
+            return;
+            }
+            var root = -c / b;
+            document.getElementById('results').innerHTML = 'Not a quadratic polynomial. Zero of the Polynom is ' + root;
+            drawGraph(a, b, c, [root]);
+            return;
+        }
+        // for a quadratic polynom
+        var discriminant = b * b - 4 * a * c;
+        var roots = [];
+
+        if (discriminant > 0) {
+            var root1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+            var root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+            roots.push(root1, root2);
+            document.getElementById('results').innerHTML = 'It has two Roots: ' + '<br> Root 1 = ' + root1 + '<br>Root 2 = ' + root2;
+        } else if (discriminant === 0) { 
+            var root1 = -b / (2 * a);
+            roots.push(root1);
+            document.getElementById('results').innerHTML = 'It has one Root: ' + '<br> Root =' + root1;
+        } else {
+            document.getElementById('results').innerHTML = 'It has no real Roots';
+        }
+
+        drawGraph(a, b, c, roots);
+    }
+        
+    window.onload = drawAxes;
+    </script>
+
+</body>
+</html>
